@@ -13,20 +13,11 @@ char* getAdress(){
 	return address;
 }
 
-int getStringLength(char* string){
-	int len = 0;
-	while(string[len] != '\0' && string[len] != NULL){
-		len++;
-	}
-	return len;
-}
-
 char* getProgramName(char* path){
 	char* name = (char*)malloc(20*sizeof(char));
 	memset(name,'\0',20);
-	int len = getStringLength(path);
+	int len = strlen(path);
 	int index = len-1;
-	
 	// 空格检测 
 	for(int i=0;i<index;i++){
 		if(path[i] == ' '){
@@ -50,11 +41,11 @@ char* getProgramName(char* path){
 
 char* myStrCat(char* str1,char* str2){
 	
-	int len1 = getStringLength(str1);
-	int len2 = getStringLength(str2);
+	int len1 = strlen(str1);
+	int len2 = strlen(str2);
 	int len = len1+len2;
-	
-	char* newStr = (char*)malloc(sizeof(char)*len);
+
+	char* newStr = (char*)malloc(sizeof(char)*(len+1));
 	memset(newStr,'\0',len);
 	int idx = 0;
 	
@@ -70,7 +61,7 @@ char* myStrCat(char* str1,char* str2){
 }
 
 char* fillChar(char* chars){
-	int len = getStringLength(chars) + 20;
+	int len = strlen(chars) + 20;
 	char* newStr = (char*)malloc(sizeof(char)*len);
 	memset(newStr,'\0',len);
 	int idx = 0;
@@ -94,10 +85,10 @@ void process(){
 	while(1){
 		
 		printf("\ninput file path:\n"); 
-		
+	
 		f = false;
 		char *address = getAdress();
-		int len =  getStringLength(address);
+		int len =  strlen(address);
 		if(len == 0){
 			myFree(address);
 			continue;
@@ -119,6 +110,7 @@ void process(){
 			tmp = myStrCat(k,"\"");
 			myFree(k);	
 		}
+		
 		thr = fillChar(tmp);
 		
 		FILE* f = fopen(fileName,"w");
@@ -127,6 +119,11 @@ void process(){
 		
 		fputs(fir,f);
 		fputc('\n',f);
+		
+		fputs("\"Icon\"=\"",f);
+		fputs(fillChar(address),f);
+		fputs("\"",f);
+		fputc('\n',f);	
 		
 		fputs(sec,f);
 		fputc('\n',f);
@@ -153,7 +150,9 @@ void process(){
 int main(){
 
 	printf("所有添加的项存在于(注册表)regedit的下列路径中，可自行修改:\n"); 
-	printf("计算机\\HKEY_CLASSES_ROOT\\Directory\\Background\\shell\n");
+	printf("计算机\\HKEY_CLASSES_ROOT\\Directory\\Background\\shell\n\n");
+	printf("将要添加到右键的exe文件(不是快捷方式！)拖入窗口回车，看到SUCCESS字样即表示成功\n"); 
+	printf("双击生成的reg后缀文件添加即可。\n");
 	process();
 	return 0;
 } 
