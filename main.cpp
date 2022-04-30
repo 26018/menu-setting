@@ -4,6 +4,7 @@
 
 char base[] = "[HKEY_CLASSES_ROOT\\Directory\\Background\\shell\\";
 bool f = false; // 空格检查标志 
+int baseSize = 50;
 
 char* getAdress(){
 	char* address = (char *)malloc(300 * sizeof(char));
@@ -24,7 +25,7 @@ char* getProgramName(char* path){
 			f = true;
 			break;
 		}
-	} 
+	}
 	
 	while(index >= 0 && path[index] != '\\'){
 		index--;
@@ -39,46 +40,38 @@ char* getProgramName(char* path){
 	return name;
 }
 
-char* myStrCat(char* str1,char* str2){
-	
-	int len1 = strlen(str1);
-	int len2 = strlen(str2);
-	int len = len1+len2;
-
-	char* newStr = (char*)malloc(sizeof(char)*(len+1));
-	memset(newStr,'\0',len);
+char* myStrCat(char* c[]){
 	int idx = 0;
-	
-	for(int i=0;i<len1;i++){
-		newStr[idx++] = str1[i];
+	int len = 0;
+	while(c[idx] != NULL){
+		len += strlen(c[idx++]);
 	}
-	
-	for(int i=0;i<len2 && idx < len;i++){
-		newStr[idx++] = str2[i];
+	len+=10;
+	idx = 0;
+//	printf("len:%d\n",len);
+	char* ret = (char *)malloc(len*sizeof(char));
+	memset(ret,'\0',len);
+	while(c[idx] != NULL){
+		strcat(ret,c[idx++]);
 	}
-	newStr[idx] = '\0';
-	return newStr;
+//	printf("%s\n",ret);
+	return ret;
 }
 
-char* fillChar(char* chars){
+char* fillChar(char* chars,char c){
 	int len = strlen(chars) + 20;
 	char* newStr = (char*)malloc(sizeof(char)*len);
 	memset(newStr,'\0',len);
 	int idx = 0;
 	for(int i=0;i<len-20;i++){
 		if(chars[i] == '\\'){
-			newStr[idx++] = '\\';
+			newStr[idx++] = c;
 		}
 		newStr[idx++] = chars[i];
 	}
 	newStr[idx] = '\0';
 	return newStr;
 } 
-
-void myFree(char* str){
-	free(str);
-	str = NULL;
-}
 
 void process(){
 	
@@ -90,58 +83,49 @@ void process(){
 		char *address = getAdress();
 		int len =  strlen(address);
 		if(len == 0){
-			myFree(address);
+			free(address);
 			continue;
 		}
 		char* name = getProgramName(address);
-		char* a =  myStrCat(base,name);
-		char* fir = myStrCat(a,"]");
-		char* b = myStrCat(base,name);
-		char* sec = myStrCat(b,"\\command]");
-		char* fileName = myStrCat(name,".reg");
-		char* thr = NULL; 
 		
-		// 路径中存在空格的话，不用添加引号 
-		char* tmp = NULL;
+		// first line 
+		char* f_l[baseSize] = {base,name,"]\n"};
+		char* first_line = myStrCat(f_l);
+		
+		
+		// sec line 
+		char* sec_line;
 		if(f){
-			tmp = myStrCat("@=",address);
+			char* s_l[baseSize] = {"\"Icon\"=", fillChar(address,'\\') ,"\n"} ;
+			sec_line = myStrCat(s_l); 
 		}else{
-			char* k =  myStrCat("@=\"",address);
-			tmp = myStrCat(k,"\"");
-			myFree(k);	
+			char* s_l[baseSize] = {"\"Icon\"=","\"", fillChar(address,'\\') ,"\"\n"};
+			sec_line = myStrCat(s_l); 
 		}
 		
-		thr = fillChar(tmp);
+		// thrd line
+		char* t_l[baseSize] = {base,name,"\\command]\n"};
+		char* thrd_line = myStrCat(t_l);
 		
-		FILE* f = fopen(fileName,"w");
+		char* end;
+		if(f){
+			char* e_l[baseSize] =  {"@=",fillChar(address,'\\')};
+			end = myStrCat(e_l);
+			
+		}else{
+			char* e_l[baseSize] =  {"@=\"",fillChar(address,'\\'),"\""};
+			end = myStrCat(e_l);
 		
+		}
+		
+		char* fileName[baseSize] = {name,".reg"};
+		FILE* f = fopen(myStrCat(fileName),"w");
 		fputs("Windows Registry Editor Version 5.00\n",f);
-		
-		fputs(fir,f);
-		fputc('\n',f);
-		
-		fputs("\"Icon\"=\"",f);
-		fputs(fillChar(address),f);
-		fputs("\"",f);
-		fputc('\n',f);	
-		
-		fputs(sec,f);
-		fputc('\n',f);
-		
-		fputs(thr,f);
-		fputc('\n',f);
-		
+		fputs(first_line,f);
+		fputs(sec_line,f);
+		fputs(thrd_line,f);
+		fputs(end,f);
 		fclose(f);
-		
-		myFree(address);
-		myFree(name);
-		myFree(a);
-		myFree(b);
-		myFree(tmp);
-		myFree(fir);
-		myFree(sec);
-		myFree(thr);
-		myFree(fileName);
 		
 		printf("SUCCESS...\n");
 	}
